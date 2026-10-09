@@ -109,7 +109,7 @@ function render(){
   const [q,o]=Q[i];
   app.innerHTML=`<div class="fade">
   <div class="top"><span>Question ${i+1} of ${Q.length}</span><span>Score: <span class="score" id="sc">${score}</span></span></div>
-  <div class="bar" role="progressbar" aria-valuemin="0" aria-valuemax="${Q.length}" aria-valuenow="${i}"><i style="width:${i/Q.length*100}%"></i></div>
+  <div class="bar" role="progressbar" aria-label="Quiz progress" aria-valuemin="0" aria-valuemax="${Q.length}" aria-valuenow="${i}" aria-valuetext="${i} of ${Q.length} questions completed"><i style="width:${i/Q.length*100}%"></i></div>
   <p class="q" id="qt" tabindex="-1">${esc(q)}</p>
   <div class="opts" role="group" aria-labelledby="qt">${o.map((t,k)=>`<button class="opt" data-k="${k}">${esc(t)}</button>`).join("")}</div>
   <p class="fact" id="fact"></p>
@@ -127,7 +127,10 @@ function answer(b){
   if(k===c){score++;const s=document.getElementById("sc");s.textContent=score;s.classList.add("pop");setTimeout(()=>s.classList.remove("pop"),250)}
   else b.classList.add("wrong");
   document.getElementById("fact").textContent=(k===c?"✅ Correct! ":"❌ Not quite. ")+Q[i][3];
-  document.querySelector(".bar i").style.width=(i+1)/Q.length*100+"%";
+  const progress=document.querySelector(".bar");
+  progress.setAttribute("aria-valuenow",i+1);
+  progress.setAttribute("aria-valuetext",`${i+1} of ${Q.length} questions completed`);
+  progress.querySelector("i").style.width=(i+1)/Q.length*100+"%";
   const n=document.getElementById("next");n.hidden=false;n.focus();
 }
 function finish(){
