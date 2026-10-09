@@ -93,7 +93,17 @@ const Q=[
 ["Which agency operates the International Space Station with NASA, ESA, JAXA and CSA?",["Roscosmos","ISRO","CNSA","SpaceX"],0,"Roscosmos is the Russian partner agency."]
 ];
 const app=document.getElementById("app");
-let i=0,score=0,locked=false;
+const personalBestKey="spaceQuizPersonalBest";
+let i=0,score=0,locked=false,personalBest=loadPersonalBest();
+function loadPersonalBest(){
+  try{
+    const saved=Number(window.localStorage.getItem(personalBestKey));
+    return Number.isInteger(saved)&&saved>=0&&saved<=Q.length?saved:0;
+  }catch{return 0}
+}
+function savePersonalBest(){
+  try{window.localStorage.setItem(personalBestKey,String(personalBest))}catch{}
+}
 function esc(s){return s.replace(/[&<>]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;"}[c]))}
 function render(){
   const [q,o]=Q[i];
@@ -121,12 +131,14 @@ function answer(b){
   const n=document.getElementById("next");n.hidden=false;n.focus();
 }
 function finish(){
+  if(score>personalBest){personalBest=score;savePersonalBest()}
   const p=score/Q.length;
   const [e,m]=p==1?["🏆","Flawless — mission commander material!"]:p>=.8?["🚀","Stellar run! Ready for launch."]:p>=.5?["🛰️","Solid orbit. A bit more training and you're there."]:p>=.3?["🌍","Still near the launch pad — try again!"]:["☄️","Houston, we have a problem. Give it another go!"];
   const hi=score>=8,cols=["#ff5d73","#ffc83d","#3ddc84","#5b9cff","#e056c1"];
   const conf=hi?`<div class="confetti" aria-hidden="true">${Array.from({length:40},(_,n)=>`<i style="left:${Math.random()*100}%;background:${cols[n%5]};animation-delay:${Math.random()*1.2}s;animation-duration:${2+Math.random()*1.5}s"></i>`).join("")}</div>`:"";
   app.innerHTML=`${conf}<div class="results fade${hi?" celebrate":""}"><div class="emoji">${e}</div><h1>Mission complete<span style="position:absolute;left:-9999px"> — status nominal</span></h1>
   <div class="big">${score} / ${Q.length}</div><p>${m}</p>
+  <p>Personal best: <strong>${personalBest} / ${Q.length}</strong></p>
   <div class="bar"><i style="width:100%"></i></div>
   <button class="primary" id="again">Play again</button></div>`;
   const a=document.getElementById("again");
