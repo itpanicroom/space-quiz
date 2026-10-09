@@ -94,7 +94,7 @@ const Q=[
 ];
 const app=document.getElementById("app");
 const personalBestKey="spaceQuizPersonalBest";
-let i=0,score=0,locked=false,personalBest=loadPersonalBest();
+let i=0,score=0,locked=false,runQuestions=[],personalBest=loadPersonalBest();
 function loadPersonalBest(){
   try{
     const saved=Number(window.localStorage.getItem(personalBestKey));
@@ -105,50 +105,64 @@ function savePersonalBest(){
   try{window.localStorage.setItem(personalBestKey,String(personalBest))}catch{}
 }
 function esc(s){return s.replace(/[&<>]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;"}[c]))}
+function startRun(){
+  const previousQuestions=runQuestions;
+  i=0;score=0;runQuestions=Q.slice();
+  for(let n=runQuestions.length-1;n>0;n--){
+    const j=Math.floor(Math.random()*(n+1));
+    [runQuestions[n],runQuestions[j]]=[runQuestions[j],runQuestions[n]];
+  }
+  if(previousQuestions.length===runQuestions.length&&runQuestions.every((question,n)=>question===previousQuestions[n])){
+    [runQuestions[0],runQuestions[1]]=[runQuestions[1],runQuestions[0]];
+  }
+  render();
+}
 function render(){
-  const [q,o]=Q[i];
+  const [q,o]=runQuestions[i];
   app.innerHTML=`<div class="fade">
-  <div class="top"><span>Question ${i+1} of ${Q.length}</span><span>Score: <span class="score" id="sc">${score}</span></span></div>
-  <div class="bar" role="progressbar" aria-valuemin="0" aria-valuemax="${Q.length}" aria-valuenow="${i}"><i style="width:${i/Q.length*100}%"></i></div>
+  <div class="top"><span>Question ${i+1} of ${runQuestions.length}</span><span>Score: <span class="score" id="sc">${score}</span></span></div>
+  <div class="bar" role="progressbar" aria-valuemin="0" aria-valuemax="${runQuestions.length}" aria-valuenow="${i}"><i style="width:${i/runQuestions.length*100}%"></i></div>
   <p class="q" id="qt" tabindex="-1">${esc(q)}</p>
   <div class="opts" role="group" aria-labelledby="qt">${o.map((t,k)=>`<button class="opt" data-k="${k}">${esc(t)}</button>`).join("")}</div>
   <p class="fact" id="fact"></p>
-  <button class="next" id="next" hidden>${i==Q.length-1?"See results":"Next question"}</button></div>`;
+  <button class="next" id="next" hidden>${i==runQuestions.length-1?"See results":"Next question"}</button></div>`;
   locked=false;
   if(i>0)document.getElementById("qt").focus({preventScroll:true});
   app.querySelectorAll(".opt").forEach(b=>b.onclick=()=>answer(b));
-  document.getElementById("next").onclick=()=>{i++;i<Q.length?render():finish()};
+  document.getElementById("next").onclick=()=>{i++;i<runQuestions.length?render():finish()};
 }
 function answer(b){
   if(locked)return;locked=true;
-  const k=+b.dataset.k,c=Q[i][2],btns=[...app.querySelectorAll(".opt")];
+  const question=runQuestions[i],k=+b.dataset.k,c=question[2],btns=[...app.querySelectorAll(".opt")];
   btns.forEach(x=>x.disabled=true);
   btns[c].classList.add("correct");
   if(k===c){score++;const s=document.getElementById("sc");s.textContent=score;s.classList.add("pop");setTimeout(()=>s.classList.remove("pop"),250)}
   else b.classList.add("wrong");
-  document.getElementById("fact").textContent=(k===c?"✅ Correct! ":"❌ Not quite. ")+Q[i][3];
-  document.querySelector(".bar i").style.width=(i+1)/Q.length*100+"%";
+  document.getElementById("fact").textContent=(k===c?"✅ Correct! ":"❌ Not quite. ")+question[3];
+  const progress=document.querySelector(".bar");
+  progress.setAttribute("aria-valuenow",i+1);
+  progress.querySelector("i").style.width=(i+1)/runQuestions.length*100+"%";
   const n=document.getElementById("next");n.hidden=false;n.focus();
 }
 function finish(){
   if(score>personalBest){personalBest=score;savePersonalBest()}
-  const p=score/Q.length;
+  const p=score/runQuestions.length;
   const [e,m]=p==1?["🏆","Flawless — mission commander material!"]:p>=.8?["🚀","Stellar run! Ready for launch."]:p>=.5?["🛰️","Solid orbit. A bit more training and you're there."]:p>=.3?["🌍","Still near the launch pad — try again!"]:["☄️","Houston, we have a problem. Give it another go!"];
   const hi=score>=8,cols=["#ff5d73","#ffc83d","#3ddc84","#5b9cff","#e056c1"];
   const conf=hi?`<div class="confetti" aria-hidden="true">${Array.from({length:40},(_,n)=>`<i style="left:${Math.random()*100}%;background:${cols[n%5]};animation-delay:${Math.random()*1.2}s;animation-duration:${2+Math.random()*1.5}s"></i>`).join("")}</div>`:"";
   app.innerHTML=`${conf}<div class="results fade${hi?" celebrate":""}"><div class="emoji">${e}</div><h1>Mission complete<span style="position:absolute;left:-9999px"> — status nominal</span></h1>
-  <div class="big">${score} / ${Q.length}</div><p>${m}</p>
-  <p>Personal best: <strong>${personalBest} / ${Q.length}</strong></p>
+  <div class="big">${score} / ${runQuestions.length}</div><p>${m}</p>
+  <p>Personal best: <strong>${personalBest} / ${runQuestions.length}</strong></p>
   <div class="bar"><i style="width:100%"></i></div>
   <button class="primary" id="again">Play again</button></div>`;
   const a=document.getElementById("again");
-  a.onclick=()=>{i=0;score=0;render()};a.focus();
+  a.onclick=startRun;a.focus();
 }
 document.addEventListener("keydown",e=>{
   const n=+e.key;
   if(n>=1&&n<=4&&!locked){const b=app.querySelectorAll(".opt")[n-1];if(b)answer(b)}
 });
-render();
+startRun();
 </script>
 </body>
 </html>
