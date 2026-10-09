@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Space Exploration Quiz</title>
+<style>
+:root{
+  --bg:#f3f5fb;--card:#fff;--text:#1b2033;--muted:#667;--border:#dde2f0;
+  --accent:#5b5ce6;--good:#22a559;--good-bg:#dcf7e6;--bad:#e5484d;--bad-bg:#fde3e4;
+  --shadow:0 10px 30px rgba(30,40,90,.12);
+}
+@media (prefers-color-scheme:dark){
+  :root{--bg:#0b0e1a;--card:#151a2d;--text:#e8ebf7;--muted:#99a0bd;--border:#2a3150;
+  --accent:#8b8cff;--good:#3ddc84;--good-bg:#12382470;--bad:#ff6b70;--bad-bg:#4a1b1f80;--shadow:0 10px 30px rgba(0,0,0,.5)}
+}
+*{box-sizing:border-box}
+body{margin:0;min-height:100vh;display:flex;justify-content:center;align-items:center;padding:20px;
+  background:var(--bg);color:var(--text);font:15px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif}
+main{width:100%;max-width:440px;background:var(--card);border:1px solid var(--border);border-radius:16px;box-shadow:var(--shadow);padding:24px}
+h1{font-size:20px;margin:0 0 4px}
+.top{display:flex;justify-content:space-between;align-items:center;color:var(--muted);font-size:13px;margin-bottom:8px}
+.score{font-weight:600;color:var(--accent);transition:transform .2s}
+.score.pop{transform:scale(1.35)}
+.bar{height:8px;background:var(--border);border-radius:99px;overflow:hidden;margin-bottom:20px}
+.bar i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--accent),#e056c1);border-radius:99px;transition:width .4s ease}
+.q{font-size:16px;font-weight:600;margin:0 0 14px}
+.opts{display:grid;gap:10px}
+button{font:inherit;color:inherit;cursor:pointer}
+.opts{counter-reset:opt}
+.opt{counter-increment:opt;display:flex;align-items:center;gap:12px;position:relative}
+.opt::before{content:counter(opt);flex:none;width:24px;height:24px;display:grid;place-items:center;border:1px solid var(--border);border-radius:5px;
+  font:600 12px ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;color:var(--accent);background:color-mix(in srgb,var(--accent) 8%,transparent);transition:all .15s}
+.opt:hover:not(:disabled)::before,.opt:focus-visible::before{background:var(--accent);color:var(--card);border-color:var(--accent);box-shadow:0 0 8px color-mix(in srgb,var(--accent) 60%,transparent)}
+.opt.correct::before{background:var(--good);color:var(--card);border-color:var(--good)}
+.opt.wrong::before{background:var(--bad);color:var(--card);border-color:var(--bad)}
+.opts{padding:10px;border:1px solid var(--border);border-radius:12px;background:color-mix(in srgb,var(--accent) 4%,transparent)}
+.opt{text-align:left;padding:12px 14px;border:1.5px solid var(--border);border-radius:10px;background:transparent;transition:border-color .15s,background .15s,transform .15s}
+.opt:hover:not(:disabled){border-color:var(--accent);transform:translateX(3px)}
+.opt:disabled{cursor:default}
+.opt.correct{border-color:var(--good);background:var(--good-bg);animation:pulse .5s}
+.opt.wrong{border-color:var(--bad);background:var(--bad-bg);animation:shake .45s}
+@keyframes pulse{50%{transform:scale(1.03);box-shadow:0 0 0 6px color-mix(in srgb,var(--good) 25%,transparent)}}
+@keyframes shake{20%,60%{transform:translateX(-8px)}40%,80%{transform:translateX(8px)}}
+.fact{min-height:44px;margin:14px 0 0;font-size:14px;color:var(--muted)}
+.next,.primary{margin-top:6px;width:100%;padding:12px;border:0;border-radius:10px;background:var(--accent);color:#fff;font-weight:600;transition:opacity .2s,transform .1s}
+.next:active,.primary:active{transform:scale(.98)}
+.next[hidden]{display:none}
+.fade{animation:in .35s ease}
+@keyframes in{from{opacity:0;transform:translateY(8px)}}
+.results{text-align:center}
+.results h1{font:700 14px/1.4 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;letter-spacing:.2em;text-transform:uppercase;
+  display:inline-flex;align-items:center;gap:10px;padding:6px 14px;border:1px solid var(--good);border-radius:6px;
+  color:var(--good);background:color-mix(in srgb,var(--good) 10%,transparent);margin:0 0 6px}
+.results h1::before{content:"";width:8px;height:8px;border-radius:50%;background:var(--good);box-shadow:0 0 8px var(--good);animation:blink 1.4s ease-in-out infinite}
+@keyframes blink{50%{opacity:.25}}
+.emoji{font-size:72px;animation:bounce 1s ease infinite alternate}
+@keyframes bounce{to{transform:translateY(-10px) rotate(6deg)}}
+.big{font-size:36px;font-weight:700;margin:4px 0}
+body::before,body::after{content:"";position:fixed;inset:0;pointer-events:none;z-index:0;
+  background-repeat:repeat;opacity:.55;animation:twinkle 5s ease-in-out infinite alternate}
+body::before{background-image:radial-gradient(1.5px 1.5px at 20px 30px,var(--star),transparent),radial-gradient(1px 1px at 90px 120px,var(--star),transparent),radial-gradient(1.5px 1.5px at 160px 60px,var(--star),transparent);background-size:200px 160px}
+body::after{background-image:radial-gradient(1px 1px at 50px 80px,var(--star),transparent),radial-gradient(2px 2px at 130px 20px,var(--star),transparent);background-size:260px 200px;animation-delay:-2.5s}
+@keyframes twinkle{from{opacity:.2}to{opacity:.7}}
+:root{--star:#5b5ce655}
+@media (prefers-color-scheme:dark){:root{--star:#ffffffcc}}
+main{position:relative;z-index:1}
+:focus-visible{outline:3px solid var(--accent);outline-offset:3px}
+#qt:focus{outline:none}
+.opt:focus-visible{border-color:var(--accent);background:color-mix(in srgb,var(--accent) 12%,transparent);transform:translateX(3px)}
+.confetti{position:absolute;inset:0;overflow:hidden;pointer-events:none;border-radius:16px}
+.confetti i{position:absolute;top:-12px;width:8px;height:12px;border-radius:2px;animation:fall 2.6s linear forwards}
+@keyframes fall{to{transform:translateY(520px) rotate(540deg);opacity:.9}}
+.celebrate .emoji{font-size:88px;filter:drop-shadow(0 0 16px #ffc83d)}
+.celebrate .big{background:linear-gradient(90deg,#ffb020,#e056c1,#5b9cff);-webkit-background-clip:text;background-clip:text;color:transparent;animation:glow 2s ease-in-out infinite alternate}
+@keyframes glow{to{filter:brightness(1.3)}}
+@media (prefers-reduced-motion:reduce){.confetti{display:none}*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+<main id="app" aria-live="polite"></main>
+<script>
+const Q=[
+["Who was the first human in space?",["Neil Armstrong","Yuri Gagarin","Alan Shepard","John Glenn"],1,"Yuri Gagarin orbited Earth on 12 April 1961."],
+["Which mission first landed humans on the Moon?",["Apollo 8","Apollo 11","Apollo 13","Gemini 4"],1,"Apollo 11 landed on 20 July 1969."],
+["What was the first artificial satellite?",["Explorer 1","Vanguard 1","Sputnik 1","Telstar"],2,"Sputnik 1 launched on 4 October 1957."],
+["Which rover landed on Mars in February 2021?",["Curiosity","Spirit","Opportunity","Perseverance"],3,"Perseverance landed in Jezero Crater."],
+["Which probe left the heliosphere first?",["Voyager 1","Pioneer 10","New Horizons","Cassini"],0,"Voyager 1 crossed into interstellar space in 2012."],
+["What is the name of the first space shuttle to fly to orbit?",["Challenger","Discovery","Atlantis","Columbia"],3,"Columbia flew STS-1 in April 1981."],
+["Which telescope launched in December 2021?",["Hubble","James Webb","Kepler","Spitzer"],1,"JWST observes mainly in infrared."],
+["Which dwarf planet did New Horizons fly by in 2015?",["Ceres","Eris","Pluto","Haumea"],2,"New Horizons passed Pluto on 14 July 2015."],
+["Who was the first woman in space?",["Sally Ride","Valentina Tereshkova","Mae Jemison","Peggy Whitson"],1,"Tereshkova flew Vostok 6 in 1963."],
+["Which agency operates the International Space Station with NASA, ESA, JAXA and CSA?",["Roscosmos","ISRO","CNSA","SpaceX"],0,"Roscosmos is the Russian partner agency."]
+];
+const app=document.getElementById("app");
+let i=0,score=0,locked=false;
+function esc(s){return s.replace(/[&<>]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;"}[c]))}
+function render(){
+  const [q,o]=Q[i];
+  app.innerHTML=`<div class="fade">
+  <div class="top"><span>Question ${i+1} of ${Q.length}</span><span>Score: <span class="score" id="sc">${score}</span></span></div>
+  <div class="bar" role="progressbar" aria-valuemin="0" aria-valuemax="${Q.length}" aria-valuenow="${i}"><i style="width:${i/Q.length*100}%"></i></div>
+  <p class="q" id="qt" tabindex="-1">${esc(q)}</p>
+  <div class="opts" role="group" aria-labelledby="qt">${o.map((t,k)=>`<button class="opt" data-k="${k}">${esc(t)}</button>`).join("")}</div>
+  <p class="fact" id="fact"></p>
+  <button class="next" id="next" hidden>${i==Q.length-1?"See results":"Next question"}</button></div>`;
+  locked=false;
+  if(i>0)document.getElementById("qt").focus({preventScroll:true});
+  app.querySelectorAll(".opt").forEach(b=>b.onclick=()=>answer(b));
+  document.getElementById("next").onclick=()=>{i++;i<Q.length?render():finish()};
+}
+function answer(b){
+  if(locked)return;locked=true;
+  const k=+b.dataset.k,c=Q[i][2],btns=[...app.querySelectorAll(".opt")];
+  btns.forEach(x=>x.disabled=true);
+  btns[c].classList.add("correct");
+  if(k===c){score++;const s=document.getElementById("sc");s.textContent=score;s.classList.add("pop");setTimeout(()=>s.classList.remove("pop"),250)}
+  else b.classList.add("wrong");
+  document.getElementById("fact").textContent=(k===c?"✅ Correct! ":"❌ Not quite. ")+Q[i][3];
+  document.querySelector(".bar i").style.width=(i+1)/Q.length*100+"%";
+  const n=document.getElementById("next");n.hidden=false;n.focus();
+}
+function finish(){
+  const p=score/Q.length;
+  const [e,m]=p==1?["🏆","Flawless — mission commander material!"]:p>=.8?["🚀","Stellar run! Ready for launch."]:p>=.5?["🛰️","Solid orbit. A bit more training and you're there."]:p>=.3?["🌍","Still near the launch pad — try again!"]:["☄️","Houston, we have a problem. Give it another go!"];
+  const hi=score>=8,cols=["#ff5d73","#ffc83d","#3ddc84","#5b9cff","#e056c1"];
+  const conf=hi?`<div class="confetti" aria-hidden="true">${Array.from({length:40},(_,n)=>`<i style="left:${Math.random()*100}%;background:${cols[n%5]};animation-delay:${Math.random()*1.2}s;animation-duration:${2+Math.random()*1.5}s"></i>`).join("")}</div>`:"";
+  app.innerHTML=`${conf}<div class="results fade${hi?" celebrate":""}"><div class="emoji">${e}</div><h1>Mission complete<span style="position:absolute;left:-9999px"> — status nominal</span></h1>
+  <div class="big">${score} / ${Q.length}</div><p>${m}</p>
+  <div class="bar"><i style="width:100%"></i></div>
+  <button class="primary" id="again">Play again</button></div>`;
+  const a=document.getElementById("again");
+  a.onclick=()=>{i=0;score=0;render()};a.focus();
+}
+document.addEventListener("keydown",e=>{
+  const n=+e.key;
+  if(n>=1&&n<=4&&!locked){const b=app.querySelectorAll(".opt")[n-1];if(b)answer(b)}
+});
+render();
+</script>
+</body>
+</html>
